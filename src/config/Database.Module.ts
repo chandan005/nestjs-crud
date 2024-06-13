@@ -12,9 +12,7 @@ enum DatabaseConnectionName {
       imports: [ConfigModule],
       connectionName: DatabaseConnectionName.PayEver,
       useFactory: async (config: ConfigService) => ({
-        uri: config.get('MONGO_URI_BILLING'),
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
+        uri: config.get('MONGO_URI_PAYEVER'),
       }),
       inject: [ConfigService],
     }),
