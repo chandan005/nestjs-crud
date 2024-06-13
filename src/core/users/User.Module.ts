@@ -1,6 +1,7 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DatabaseConnectionName } from '../../config/Database.Module';
+import { DatabaseConnectionName } from '../../infra/database/Database.Module';
 import { UserController } from './User.Controller';
 import { UserService } from './User.Service';
 import { User, UserSchema } from './entities/User.Entity';
@@ -17,6 +18,7 @@ import { User, UserSchema } from './entities/User.Entity';
       ],
       DatabaseConnectionName.PayEver,
     ),
+    HttpModule,
   ],
   controllers: [UserController],
   providers: [UserService],

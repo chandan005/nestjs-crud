@@ -23,8 +23,12 @@ export class User extends Document {
   lastName: string;
 
   @ApiProperty()
-  @Prop({ required: true, trim: true })
-  avatar: string;
+  @Prop({ required: false, trim: true })
+  avatarUrl?: string;
+
+  @ApiProperty()
+  @Prop({ required: false, trim: true })
+  avatarHash?: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

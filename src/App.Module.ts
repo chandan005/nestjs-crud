@@ -4,8 +4,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './App.Controller';
-import { DatabaseModule } from './config/Database.Module';
 import { UserModule } from './core/users/User.Module';
+import { DatabaseModule } from './infra/database/Database.Module';
 
 @Module({
   imports: [
