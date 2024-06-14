@@ -6,6 +6,8 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './App.Controller';
 import { UserModule } from './core/users/User.Module';
 import { DatabaseModule } from './infra/database/Database.Module';
+import { SendGridModule } from './infra/sendgrid/Sendgrid.Module';
+import { RabbitMQModule } from './infra/rabbitmq/RabbitMQ.Module';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { DatabaseModule } from './infra/database/Database.Module';
     EventEmitterModule.forRoot(),
     DatabaseModule,
     UserModule,
+    SendGridModule,
+    RabbitMQModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

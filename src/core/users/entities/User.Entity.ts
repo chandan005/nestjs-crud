@@ -12,6 +12,10 @@ import { Document } from 'mongoose';
 export class User extends Document {
   @ApiProperty()
   @Prop({ required: true, trim: true })
+  userId: number;
+
+  @ApiProperty()
+  @Prop({ required: true, trim: true })
   email: string;
 
   @ApiProperty()

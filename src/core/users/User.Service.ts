@@ -52,17 +52,16 @@ export class UserService {
         this.httpService.get(`${ReqBin.baseUrl}/users/${userId}`),
       );
 
-      if (!data) {
+      if (!data.data) {
         throw new NotFoundException(`Exception getting user with ID ${userId}`);
       }
 
       const mappedUser: User = {
-        firstName: data.first_name,
-        lastName: data.last_name,
-        email: data.email,
-        avatarUrl: data.avatar,
-        ...data,
-      };
+        firstName: data.data.first_name,
+        lastName: data.data.last_name,
+        email: data.data.email,
+        avatarUrl: data.data.avatar,
+      } as User;
 
       return mappedUser;
     } catch (error) {
@@ -71,13 +70,13 @@ export class UserService {
   }
 
   async findAvatar(userId: number): Promise<string> {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findOne({ userId });
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found.`);
     }
 
     if (user.avatarHash) {
-      const filePath = `./avatars/${user.avatarHash}.png`;
+      const filePath = `src/core/users/avatars/${user.avatarHash}.png`;
       const avatar = await readFile(filePath);
       return avatar.toString('base64');
     } else {
@@ -88,7 +87,7 @@ export class UserService {
         this.httpService.get(user.avatarUrl, { responseType: 'arraybuffer' }),
       );
       const avatarHash = createHash('sha256').update(data).digest('hex');
-      const filePath = `./avatars/${avatarHash}.png`;
+      const filePath = `src/core/users/avatars/${avatarHash}.png`;
       await writeFile(filePath, data);
       user.avatarHash = avatarHash;
       await user.save();
@@ -97,7 +96,7 @@ export class UserService {
   }
 
   async deleteAvatar(userId: number): Promise<void> {
-    const user = await this.repository.findById(userId);
+    const user = await this.repository.findOne({ userId });
     if (!user) {
       throw new NotFoundException(`User with ID ${userId} not found.`);
     }

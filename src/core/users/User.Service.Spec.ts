@@ -70,9 +70,11 @@ describe('UserService', () => {
   describe('create', () => {
     it('should create a user and send an email and rabbit event', async () => {
       const createUserDto: CreateUserDto = {
+        userId: 1,
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
+        avatarUrl: 'avatar-url',
       };
       const user = { ...createUserDto, save: jest.fn().mockResolvedValue(createUserDto) };
 
@@ -93,9 +95,11 @@ describe('UserService', () => {
 
     it('should throw an error if user creation fails', async () => {
       const createUserDto: CreateUserDto = {
+        userId: 1,
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
+        avatarUrl: 'avatar-url',
       };
       jest.spyOn(model.prototype, 'save').mockRejectedValue(new Error());
 
