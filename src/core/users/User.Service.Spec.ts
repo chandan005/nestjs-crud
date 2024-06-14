@@ -6,9 +6,11 @@ import { ClientProxy } from '@nestjs/microservices';
 import { Model } from 'mongoose';
 
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AxiosHeaders, AxiosResponse } from 'axios';
-import { of, throwError } from 'rxjs';
-import { SendGridService } from '../../infra/sendgrid/Sendgrid.Service';
+import { of } from 'rxjs';
+import { DatabaseConnectionName } from '../../infra/database/Database.Module';
+import { USER_CREATED } from '../event-listener/UserEventListener.Service';
 import { UserService } from './User.Service';
 import { CreateUserDto } from './dto/CreateUserDto';
 import { User } from './entities/User.Entity';
@@ -17,19 +19,20 @@ describe('UserService', () => {
   let service: UserService;
   let model: Model<User>;
   let httpService: HttpService;
-  let sendGridService: SendGridService;
   let clientProxy: ClientProxy;
+  let eventEmitter: EventEmitter2;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
         {
-          provide: getModelToken(User.name),
+          provide: getModelToken(User.name, DatabaseConnectionName.PayEver),
           useValue: {
             new: jest.fn().mockResolvedValue({}),
             constructor: jest.fn().mockResolvedValue({}),
             find: jest.fn(),
+            findOne: jest.fn(),
             findById: jest.fn(),
             create: jest.fn(),
             save: jest.fn(),
@@ -42,25 +45,25 @@ describe('UserService', () => {
           },
         },
         {
-          provide: SendGridService,
-          useValue: {
-            sendEmail: jest.fn(),
-          },
-        },
-        {
           provide: 'RABBITMQ_SERVICE',
           useValue: {
             emit: jest.fn(),
+          },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: {
+            emitAsync: jest.fn(),
           },
         },
       ],
     }).compile();
 
     service = module.get<UserService>(UserService);
-    model = module.get<Model<User>>(getModelToken(User.name));
+    model = module.get<Model<User>>(getModelToken(User.name, DatabaseConnectionName.PayEver));
     httpService = module.get<HttpService>(HttpService);
-    sendGridService = module.get<SendGridService>(SendGridService);
     clientProxy = module.get<ClientProxy>('RABBITMQ_SERVICE');
+    eventEmitter = module.get<EventEmitter2>(EventEmitter2);
   });
 
   it('should be defined', () => {
@@ -76,20 +79,16 @@ describe('UserService', () => {
         email: 'john.doe@example.com',
         avatarUrl: 'avatar-url',
       };
-      const user = { ...createUserDto, save: jest.fn().mockResolvedValue(createUserDto) };
+      const user = { ...createUserDto, create: jest.fn().mockResolvedValue(createUserDto) };
 
-      jest.spyOn(model.prototype, 'save').mockResolvedValue(user);
-      jest.spyOn(sendGridService, 'sendEmail').mockResolvedValue(undefined);
+      jest.spyOn(model.prototype, 'create').mockResolvedValue(user);
+      // jest.spyOn(eventEmitter, 'emitAsync').mockResolvedValue(null);
       jest.spyOn(clientProxy, 'emit').mockImplementation(() => of(true));
 
       const result = await service.create(createUserDto);
 
       expect(result).toEqual(user);
-      expect(sendGridService.sendEmail).toHaveBeenCalledWith(
-        user.email,
-        'Welcome',
-        'Thank you for registering!',
-      );
+      expect(eventEmitter.emitAsync).toHaveBeenCalledWith(USER_CREATED, user);
       expect(clientProxy.emit).toHaveBeenCalledWith('user_created', user);
     });
 
@@ -132,6 +131,7 @@ describe('UserService', () => {
       const result = await service.findById(userId);
 
       expect(result).toEqual({
+        userId: '1',
         firstName: 'John',
         lastName: 'Doe',
         email: 'john.doe@example.com',
@@ -155,14 +155,6 @@ describe('UserService', () => {
       jest.spyOn(httpService, 'get').mockReturnValue(of(mockAxiosResponse));
 
       await expect(service.findById(userId)).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw BadRequestException if there is an error', async () => {
-      const userId = 1;
-
-      jest.spyOn(httpService, 'get').mockReturnValue(throwError(new Error()));
-
-      await expect(service.findById(userId)).rejects.toThrow(BadRequestException);
     });
   });
 

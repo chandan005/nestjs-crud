@@ -65,7 +65,7 @@ export class UserService {
 
       return mappedUser;
     } catch (error) {
-      throw new BadRequestException(`Failed to get user with ID ${userId}.`, error?.response?.data);
+      throw new NotFoundException(`Failed to get user with ID ${userId}.`, error?.response?.data);
     }
   }
 
